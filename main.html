@@ -1,10 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Embedding a PowerPoint Presentation in HTML</title>
+	<title>Embedding a PDF with a Slider in HTML</title>
+	<!-- Load PDF.js library -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+	<!-- Load stylesheet for slider -->
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.3/nouislider.min.css">
+	<!-- Load JavaScript for slider -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.3/nouislider.min.js"></script>
 </head>
 <body>
-	<h1>My Presentation</h1>
-	<iframe src="https://univalaska-my.sharepoint.com/personal/jjhaag3_alaska_edu/_layouts/15/Doc.aspx?sourcedoc={212f6e5d-93aa-4be0-bff9-7aab292ba792}&amp;action=embedview&amp;wdAr=1.7819767441860466" width="476px" height="288px" frameborder="0">This is an embedded <a target="_blank" href="https://office.com">Microsoft Office</a> presentation, powered by <a target="_blank" href="https://office.com/webapps">Office</a>.</iframe>
+	<h1>My PDF Document</h1>
+	<!-- Create container for PDF viewer and slider -->
+	<div id="pdf-container">
+		<div id="pdf-viewer"></div>
+		<div id="pdf-slider"></div>
+	</div>
+	<!-- Load PDF document using PDF.js -->
+	<script>
+		// URL of the PDF document
+		const url = 'https://drive.google.com/file/d/1_fAip5rFST04iZHxvDWLXNrpzxZ3qyja/view?usp=sharing';
+		// Initialize PDF.js viewer
+		PDFJS.getDocument(url).promise.then(function(pdf) {
+			// Get first page of PDF document
+			return pdf.getPage(1);
+		}).then(function(page) {
+			// Create canvas element for PDF viewer
+			const canvas = document.createElement('canvas');
+			// Set canvas dimensions to match PDF page dimensions
+			const viewport = page.getViewport({scale: 1});
+			canvas.width = viewport.width;
+			canvas.height = viewport.height;
+			// Draw PDF page onto canvas
+			const ctx = canvas.getContext('2d');
+			const renderContext = {
+				canvasContext: ctx,
+				viewport: viewport
+			};
+			page.render(renderContext);
+			// Add canvas to PDF viewer container
+			document.querySelector('#pdf-viewer').appendChild(canvas);
+			// Create slider for navigating PDF pages
+			const slider = document.querySelector('#pdf-slider');
+			noUiSlider.create(slider, {
+				start: 1,
+				range: {
+					'min': 1,
+					'max': pdf.numPages
+				},
+				step: 1
+			});
+			// Add event listener for slider changes
+			slider.noUiSlider.on('change', function(value) {
+				// Load new PDF page based on slider value
+				const pageNum = parseInt(value[0]);
+				pdf.getPage(pageNum).then(function(page) {
+					// Clear previous canvas and draw new PDF page onto it
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+					page.render(renderContext);
+				});
+			});
+		});
+	</script>
 </body>
 </html>
